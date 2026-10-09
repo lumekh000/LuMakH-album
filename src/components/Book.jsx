@@ -9,6 +9,7 @@ import {
   ChevronsRight,
   Sparkles,
   BookOpen,
+  Layers,
   Maximize,
   Minimize
 } from 'lucide-react';
@@ -23,6 +24,7 @@ function Book() {
   const flipBookRef = useRef(null);
   const bookWrapperRef = useRef(null);
 
+  const [showCover, setShowCover] = useState(true);
   const [pagesData] = useState(() => {
     const initial = {};
     for (let i = 1; i <= TOTAL_PAGES; i++) {
@@ -91,11 +93,19 @@ function Book() {
   // Count of populated pages
   const filledCount = Object.values(pagesData).filter(p => p?.image).length;
 
-  // Page range indicator display (e.g. Pages 1 – 2)
+  // Formatted page indicator display
   const getPageDisplayText = () => {
-    const left = currentPage + 1;
-    const right = Math.min(currentPage + 2, TOTAL_PAGES);
-    return `Pages ${left} – ${right}`;
+    if (showCover) {
+      if (currentPage === 0) return 'Page 1 (Cover)';
+      if (currentPage === TOTAL_PAGES - 1) return `Page ${TOTAL_PAGES} (Back Cover)`;
+      const left = currentPage + 1;
+      const right = Math.min(currentPage + 2, TOTAL_PAGES);
+      return `Pages ${left} – ${right}`;
+    } else {
+      const left = currentPage + 1;
+      const right = Math.min(currentPage + 2, TOTAL_PAGES);
+      return `Pages ${left} – ${right}`;
+    }
   };
 
   return (
@@ -114,9 +124,10 @@ function Book() {
         </div>
       </header>
 
-      {/* Main FlipBook Area: 18 x 12 Landscape Spread */}
+      {/* Main FlipBook Area: 18 x 12 Landscape Spread with Cover Flipping */}
       <div className="flipbook-container">
         <HTMLFlipBook
+          key={showCover ? 'cover-enabled' : 'cover-disabled'}
           width={PAGE_WIDTH}
           height={PAGE_HEIGHT}
           size="stretch"
@@ -126,7 +137,7 @@ function Book() {
           maxHeight={560}
           maxShadowOpacity={0.5}
           drawShadow={true}
-          showCover={false}
+          showCover={showCover}
           mobileScrollSupport={true}
           onFlip={onPageChange}
           className="flipbook-canvas"
@@ -154,7 +165,7 @@ function Book() {
             className="nav-btn"
             onClick={flipToFirst}
             disabled={currentPage === 0}
-            title="First Page"
+            title="First Page / Cover"
           >
             <ChevronsLeft size={18} />
           </button>
@@ -183,9 +194,17 @@ function Book() {
             className="nav-btn"
             onClick={flipToLast}
             disabled={currentPage >= TOTAL_PAGES - 1}
-            title="Last Page"
+            title="Last Page / Back Cover"
           >
             <ChevronsRight size={18} />
+          </button>
+
+          <button
+            className={`nav-btn cover-btn ${showCover ? 'active' : ''}`}
+            onClick={() => setShowCover(prev => !prev)}
+            title={showCover ? "Cover Mode: Active (Page 1 as Cover)" : "Spread Mode: Active (Facing Spreads)"}
+          >
+            <Layers size={18} />
           </button>
 
           <button
