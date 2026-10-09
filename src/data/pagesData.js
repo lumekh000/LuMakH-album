@@ -24,7 +24,8 @@ export const INITIAL_PAGE_IMAGES = {
     fitMode: "cover"
   },
   // Pages 5 through 20 defaulted to blank
-  5: { image: null, fitMode: "cover" },
+  5: { image: "https://i.pinimg.com/736x/fd/f5/5b/fdf55b6edcc26b4f6e31894ea911ecfc.jpg", 
+      fitMode: "cover" },
   6: { image: null, fitMode: "cover" },
   7: { image: null, fitMode: "cover" },
   8: { image: null, fitMode: "cover" },
