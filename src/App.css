@@ -13,8 +13,8 @@ html {
   width: 100vw;
   background: #0b131e;
   color: #e2e8f0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
+  scrollbar-gutter: stable;
 }
 
 #root {
@@ -23,6 +23,7 @@ html {
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 .container {
@@ -32,6 +33,7 @@ html {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 /* Book Wrapper Layout & Safe Areas */
@@ -46,6 +48,7 @@ html {
   gap: 12px;
   justify-content: space-between;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 /* Fullscreen Mode Layout */
@@ -63,6 +66,7 @@ html {
   padding: max(16px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
   margin: 0;
   border-radius: 0;
+  overflow: hidden;
 }
 
 /* Header Styles */
@@ -122,12 +126,15 @@ html {
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .flipbook-canvas {
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
   border-radius: 4px;
   touch-action: pan-y;
+  overflow: hidden;
 }
 
 /* Page Component Styling */
