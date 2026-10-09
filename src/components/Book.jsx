@@ -14,7 +14,8 @@ import {
   Minimize
 } from 'lucide-react';
 
-const TOTAL_PAGES = 20;
+// Automatically determine total pages based on pagesData configuration (minimum 20)
+const TOTAL_PAGES = Math.max(20, ...Object.keys(INITIAL_PAGE_IMAGES).map(Number));
 
 // Book dimensions matching 18 * 12 landscape ratio (3:2 aspect ratio per page)
 const PAGE_WIDTH = 600;  // 18 units wide
@@ -160,7 +161,7 @@ function Book() {
           <BookOpen className="header-icon" size={26} />
           <div>
             <h1 className="app-title">18 × 12 Photo Book</h1>
-            <span className="badge">18×12 Ratio • 20 Pages</span>
+            <span className="badge">18×12 Ratio • {TOTAL_PAGES} Pages</span>
           </div>
         </div>
       </header>
