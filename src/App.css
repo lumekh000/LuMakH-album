@@ -13,7 +13,8 @@ html {
   width: 100vw;
   background: #0b131e;
   color: #e2e8f0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #root {
@@ -33,7 +34,7 @@ html {
   justify-content: center;
 }
 
-/* Book Wrapper Layout */
+/* Book Wrapper Layout & Safe Areas */
 .book-wrapper {
   display: flex;
   flex-direction: column;
@@ -41,8 +42,8 @@ html {
   height: 100%;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 16px 24px;
-  gap: 16px;
+  padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  gap: 12px;
   justify-content: space-between;
   transition: all 0.3s ease;
 }
@@ -59,7 +60,7 @@ html {
   max-width: 100vw;
   z-index: 9999;
   background: #0b131e;
-  padding: 16px 32px;
+  padding: max(16px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
   margin: 0;
   border-radius: 0;
 }
@@ -69,41 +70,46 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: rgba(23, 32, 48, 0.7);
+  padding: 10px 18px;
+  background: rgba(23, 32, 48, 0.75);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .header-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .header-icon {
   color: #38bdf8;
+  flex-shrink: 0;
 }
 
 .app-title {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #f8fafc;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .badge {
-  font-size: 0.75rem;
+  display: inline-block;
+  font-size: 0.72rem;
   font-weight: 600;
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.12);
   border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
+  margin-top: 2px;
 }
 
-/* Flipbook Canvas Area */
+/* Flipbook Canvas Area & Finger Touch Dragging */
 .flipbook-container {
   flex: 1;
   display: flex;
@@ -112,12 +118,16 @@ html {
   width: 100%;
   position: relative;
   perspective: 1500px;
-  padding: 10px 0;
+  padding: 8px 0;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .flipbook-canvas {
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
   border-radius: 4px;
+  touch-action: pan-y;
 }
 
 /* Page Component Styling */
@@ -129,6 +139,7 @@ html {
   box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   position: relative;
+  touch-action: pan-y;
 }
 
 .page-content {
@@ -162,6 +173,7 @@ html {
   width: 100%;
   height: 100%;
   display: block;
+  pointer-events: none;
 }
 
 .page-image.fit-cover {
@@ -177,36 +189,47 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: rgba(23, 32, 48, 0.7);
+  padding: 10px 18px;
+  background: rgba(23, 32, 48, 0.75);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .nav-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
+/* Accessible 44px Touch Target Navigation Buttons */
 .nav-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: #f8fafc;
   cursor: pointer;
   transition: all 0.2s ease;
+  touch-action: manipulation;
 }
 
 .nav-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.25);
+}
+
+.nav-btn:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
 }
 
 .nav-btn:disabled {
@@ -215,7 +238,6 @@ html {
 }
 
 .nav-btn.cover-btn {
-  margin-left: 4px;
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.18);
   color: #e2e8f0;
@@ -233,7 +255,6 @@ html {
 }
 
 .nav-btn.expand-btn {
-  margin-left: 4px;
   background: rgba(56, 189, 248, 0.1);
   border-color: rgba(56, 189, 248, 0.3);
   color: #38bdf8;
@@ -250,10 +271,11 @@ html {
 }
 
 .page-indicator {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: #94a3b8;
-  padding: 0 8px;
+  padding: 0 6px;
+  white-space: nowrap;
 }
 
 .page-indicator .highlight {
@@ -267,24 +289,79 @@ html {
   gap: 6px;
   font-size: 0.8rem;
   color: #94a3b8;
+  white-space: nowrap;
 }
 
 .sparkle-icon {
   color: #fbbf24;
 }
 
-/* Responsive Scaling */
-@media (max-height: 750px) {
+/* Mobile & Tablet Responsive Layout Rules */
+@media (max-width: 640px) {
   .book-wrapper {
-    padding: 8px 16px;
+    padding: 10px 12px;
     gap: 8px;
   }
 
-  .book-header, .book-controls {
-    padding: 8px 14px;
+  .book-header {
+    padding: 8px 12px;
   }
 
   .app-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
+  }
+
+  .badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+
+  .book-controls {
+    padding: 8px 12px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .nav-controls {
+    justify-content: center;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .nav-btn {
+    min-width: 40px;
+    min-height: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .page-indicator {
+    font-size: 0.8rem;
+    padding: 0 4px;
+  }
+
+  .book-status {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-height: 750px) {
+  .book-wrapper {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .book-header, .book-controls {
+    padding: 6px 12px;
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

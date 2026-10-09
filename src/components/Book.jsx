@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import Page from './Page';
 import { INITIAL_PAGE_IMAGES } from '../data/pagesData';
@@ -25,6 +25,10 @@ function Book() {
   const bookWrapperRef = useRef(null);
 
   const [showCover, setShowCover] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
   const [pagesData] = useState(() => {
     const initial = {};
     for (let i = 1; i <= TOTAL_PAGES; i++) {
@@ -33,8 +37,15 @@ function Book() {
     return initial;
   });
 
-  const [currentPage, setCurrentPage] = useState(0);
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  // Track window resizing for mobile orientation & screen size adaptation
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Synchronize browser full screen events
   useEffect(() => {
@@ -47,6 +58,49 @@ function Book() {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  // Navigation handlers
+  const flipPrev = useCallback(() => {
+    flipBookRef.current?.pageFlip()?.flipPrev();
+  }, []);
+
+  const flipNext = useCallback(() => {
+    flipBookRef.current?.pageFlip()?.flipNext();
+  }, []);
+
+  const flipToFirst = useCallback(() => {
+    flipBookRef.current?.pageFlip()?.flip(0);
+  }, []);
+
+  const flipToLast = useCallback(() => {
+    flipBookRef.current?.pageFlip()?.flip(TOTAL_PAGES - 1);
+  }, []);
+
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        flipPrev();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        flipNext();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        flipToFirst();
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        flipToLast();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [flipPrev, flipNext, flipToFirst, flipToLast]);
 
   const toggleFullScreen = async () => {
     try {
@@ -69,21 +123,8 @@ function Book() {
     }
   };
 
-  // Navigation handlers
-  const flipPrev = () => {
-    flipBookRef.current?.pageFlip()?.flipPrev();
-  };
-
-  const flipNext = () => {
-    flipBookRef.current?.pageFlip()?.flipNext();
-  };
-
-  const flipToFirst = () => {
-    flipBookRef.current?.pageFlip()?.flip(0);
-  };
-
-  const flipToLast = () => {
-    flipBookRef.current?.pageFlip()?.flip(TOTAL_PAGES - 1);
+  const stopControlPropagation = (e) => {
+    e.stopPropagation();
   };
 
   const onPageChange = (e) => {
@@ -110,7 +151,7 @@ function Book() {
 
   return (
     <div
-      className={`book-wrapper ${isFullScreen ? 'fullscreen-mode' : ''}`}
+      className={`book-wrapper ${isFullScreen ? 'fullscreen-mode' : ''} ${isMobile ? 'mobile-mode' : ''}`}
       ref={bookWrapperRef}
     >
       {/* Clean Header: Icon, Title, and Size Badge Only */}
@@ -124,21 +165,25 @@ function Book() {
         </div>
       </header>
 
-      {/* Main FlipBook Area: 18 x 12 Landscape Spread with Cover Flipping */}
+      {/* Main FlipBook Area: 18 x 12 Landscape Spread with Touch/Pointer Dragging */}
       <div className="flipbook-container">
         <HTMLFlipBook
-          key={showCover ? 'cover-enabled' : 'cover-disabled'}
+          key={`${showCover ? 'cover' : 'nocover'}-${isMobile ? 'portrait' : 'landscape'}`}
           width={PAGE_WIDTH}
           height={PAGE_HEIGHT}
           size="stretch"
-          minWidth={360}
+          minWidth={280}
           maxWidth={840}
-          minHeight={240}
+          minHeight={187}
           maxHeight={560}
           maxShadowOpacity={0.5}
           drawShadow={true}
           showCover={showCover}
+          usePortrait={isMobile}
           mobileScrollSupport={true}
+          swipeDistance={30}
+          clickEventForward={true}
+          useMouseEvents={true}
           onFlip={onPageChange}
           className="flipbook-canvas"
           ref={flipBookRef}
@@ -159,26 +204,32 @@ function Book() {
       </div>
 
       {/* Bottom Navigation & Controls Bar */}
-      <footer className="book-controls">
+      <footer className="book-controls" onMouseDown={stopControlPropagation} onTouchStart={stopControlPropagation}>
         <div className="nav-controls">
           <button
             className="nav-btn"
             onClick={flipToFirst}
             disabled={currentPage === 0}
-            title="First Page / Cover"
+            title="First Page / Cover (Home)"
+            aria-label="First page"
+            onMouseDown={stopControlPropagation}
+            onTouchStart={stopControlPropagation}
           >
-            <ChevronsLeft size={18} />
+            <ChevronsLeft size={20} />
           </button>
           <button
             className="nav-btn"
             onClick={flipPrev}
             disabled={currentPage === 0}
-            title="Previous Page"
+            title="Previous Page (Left Arrow)"
+            aria-label="Previous page"
+            onMouseDown={stopControlPropagation}
+            onTouchStart={stopControlPropagation}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={20} />
           </button>
 
-          <div className="page-indicator">
+          <div className="page-indicator" aria-live="polite">
             <span className="highlight">{getPageDisplayText()}</span> of {TOTAL_PAGES}
           </div>
 
@@ -186,33 +237,45 @@ function Book() {
             className="nav-btn"
             onClick={flipNext}
             disabled={currentPage >= TOTAL_PAGES - 1}
-            title="Next Page"
+            title="Next Page (Right Arrow)"
+            aria-label="Next page"
+            onMouseDown={stopControlPropagation}
+            onTouchStart={stopControlPropagation}
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={20} />
           </button>
           <button
             className="nav-btn"
             onClick={flipToLast}
             disabled={currentPage >= TOTAL_PAGES - 1}
-            title="Last Page / Back Cover"
+            title="Last Page / Back Cover (End)"
+            aria-label="Last page"
+            onMouseDown={stopControlPropagation}
+            onTouchStart={stopControlPropagation}
           >
-            <ChevronsRight size={18} />
+            <ChevronsRight size={20} />
           </button>
 
           <button
             className={`nav-btn cover-btn ${showCover ? 'active' : ''}`}
             onClick={() => setShowCover(prev => !prev)}
             title={showCover ? "Cover Mode: Active (Page 1 as Cover)" : "Spread Mode: Active (Facing Spreads)"}
+            aria-label="Toggle cover view mode"
+            onMouseDown={stopControlPropagation}
+            onTouchStart={stopControlPropagation}
           >
-            <Layers size={18} />
+            <Layers size={20} />
           </button>
 
           <button
             className={`nav-btn expand-btn ${isFullScreen ? 'active' : ''}`}
             onClick={toggleFullScreen}
             title={isFullScreen ? "Exit Fullscreen" : "Expand Fullscreen"}
+            aria-label={isFullScreen ? "Exit full screen" : "Expand full screen"}
+            onMouseDown={stopControlPropagation}
+            onTouchStart={stopControlPropagation}
           >
-            {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
+            {isFullScreen ? <Minimize size={20} /> : <Maximize size={20} />}
           </button>
         </div>
 
