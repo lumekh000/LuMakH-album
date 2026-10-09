@@ -1,132 +1,70 @@
 import React, { useState, useRef, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import Page from './Page';
+import { INITIAL_PAGE_IMAGES } from '../data/pagesData';
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Upload,
-  Trash2,
   Sparkles,
   BookOpen,
-  Layers
+  Maximize,
+  Minimize
 } from 'lucide-react';
 
 const TOTAL_PAGES = 20;
-const STORAGE_KEY = 'react_page_flip_12x18_book_data';
 
-// Book dimensions matching exact 12 * 18 ratio (2:3 aspect ratio)
-const PAGE_WIDTH = 400;  // 12 units
-const PAGE_HEIGHT = 600; // 18 units
+// Book dimensions matching 18 * 12 landscape ratio (3:2 aspect ratio per page)
+const PAGE_WIDTH = 600;  // 18 units wide
+const PAGE_HEIGHT = 400; // 12 units high
 
 function Book() {
   const flipBookRef = useRef(null);
-  const batchFileInputRef = useRef(null);
-  const [showCover, setShowCover] = useState(true);
+  const bookWrapperRef = useRef(null);
 
-  // Initialize pages state from localStorage if available
-  const [pagesData, setPagesData] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to load saved book data:', e);
-    }
-    // Default: 20 empty pages
+  const [pagesData] = useState(() => {
     const initial = {};
     for (let i = 1; i <= TOTAL_PAGES; i++) {
-      initial[i] = { image: null, fitMode: 'cover' };
+      initial[i] = INITIAL_PAGE_IMAGES[i] || { image: null, fitMode: 'cover' };
     }
     return initial;
   });
 
   const [currentPage, setCurrentPage] = useState(0);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
-  // Save to localStorage when pagesData changes
+  // Synchronize browser full screen events
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullScreen = async () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesData));
-    } catch (e) {
-      console.error('Failed to save book data to localStorage:', e);
-    }
-  }, [pagesData]);
-
-  // Handler for setting image on a page
-  const handleImageChange = (pageNumber, imageData) => {
-    setPagesData(prev => ({
-      ...prev,
-      [pageNumber]: {
-        ...prev[pageNumber],
-        image: imageData
-      }
-    }));
-  };
-
-  // Handler for removing image from a page
-  const handleImageRemove = (pageNumber) => {
-    setPagesData(prev => ({
-      ...prev,
-      [pageNumber]: {
-        ...prev[pageNumber],
-        image: null
-      }
-    }));
-  };
-
-  // Handler for toggling image fit mode (cover vs contain)
-  const handleToggleFitMode = (pageNumber) => {
-    setPagesData(prev => {
-      const currentFit = prev[pageNumber]?.fitMode || 'cover';
-      return {
-        ...prev,
-        [pageNumber]: {
-          ...prev[pageNumber],
-          fitMode: currentFit === 'cover' ? 'contain' : 'cover'
+      if (!document.fullscreenElement) {
+        if (bookWrapperRef.current?.requestFullscreen) {
+          await bookWrapperRef.current.requestFullscreen();
+        } else if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
         }
-      };
-    });
-  };
-
-  // Clear all images
-  const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all images from all 20 pages?')) {
-      const cleared = {};
-      for (let i = 1; i <= TOTAL_PAGES; i++) {
-        cleared[i] = { image: null, fitMode: 'cover' };
+        setIsFullScreen(true);
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+        setIsFullScreen(false);
       }
-      setPagesData(cleared);
+    } catch (e) {
+      console.warn('Fullscreen toggle error:', e);
+      setIsFullScreen(prev => !prev);
     }
-  };
-
-  // Batch upload multiple images at once to populate pages sequentially
-  const handleBatchUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    let targetPageIndex = 1;
-    // Find the first blank page or start at 1
-    while (targetPageIndex <= TOTAL_PAGES && pagesData[targetPageIndex]?.image) {
-      targetPageIndex++;
-    }
-    if (targetPageIndex > TOTAL_PAGES) targetPageIndex = 1;
-
-    files.slice(0, TOTAL_PAGES - targetPageIndex + 1).forEach((file, idx) => {
-      const pageNum = targetPageIndex + idx;
-      if (pageNum <= TOTAL_PAGES) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            handleImageChange(pageNum, event.target.result);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    if (batchFileInputRef.current) batchFileInputRef.current.value = '';
   };
 
   // Navigation handlers
@@ -150,85 +88,45 @@ function Book() {
     setCurrentPage(e.data);
   };
 
-  // Calculate count of pages with images
+  // Count of populated pages
   const filledCount = Object.values(pagesData).filter(p => p?.image).length;
 
-  // Format page display text
+  // Page range indicator display (e.g. Pages 1 – 2)
   const getPageDisplayText = () => {
-    if (showCover) {
-      if (currentPage === 0) return 'Page 1 (Cover)';
-      if (currentPage === TOTAL_PAGES - 1) return `Page ${TOTAL_PAGES} (Back Cover)`;
-      const left = currentPage + 1;
-      const right = Math.min(currentPage + 2, TOTAL_PAGES);
-      return `Pages ${left} – ${right}`;
-    } else {
-      const left = currentPage + 1;
-      const right = Math.min(currentPage + 2, TOTAL_PAGES);
-      return `Pages ${left} – ${right}`;
-    }
+    const left = currentPage + 1;
+    const right = Math.min(currentPage + 2, TOTAL_PAGES);
+    return `Pages ${left} – ${right}`;
   };
 
   return (
-    <div className="book-wrapper">
-      {/* Top Header / Stats Bar */}
+    <div
+      className={`book-wrapper ${isFullScreen ? 'fullscreen-mode' : ''}`}
+      ref={bookWrapperRef}
+    >
+      {/* Clean Header: Icon, Title, and Size Badge Only */}
       <header className="book-header">
         <div className="header-info">
           <BookOpen className="header-icon" size={22} />
           <div>
-            <h1 className="app-title">12 × 18 Photo Book</h1>
-            <span className="badge">12:18 Ratio • 20 Pages</span>
+            <h1 className="app-title">18 × 12 Photo Book</h1>
+            <span className="badge">18×12 Ratio • 20 Pages</span>
           </div>
-        </div>
-
-        <div className="header-actions">
-          <button
-            className="action-btn toggle-btn"
-            onClick={() => setShowCover(!showCover)}
-            title="Toggle Front/Back Cover View"
-          >
-            <Layers size={15} /> {showCover ? 'Cover View: ON' : 'Cover View: OFF'}
-          </button>
-
-          <button
-            className="action-btn secondary"
-            onClick={() => batchFileInputRef.current?.click()}
-            title="Upload multiple photos at once to fill empty pages"
-          >
-            <Upload size={15} /> Batch Upload
-          </button>
-          <input
-            type="file"
-            ref={batchFileInputRef}
-            onChange={handleBatchUpload}
-            multiple
-            accept="image/*"
-            style={{ display: 'none' }}
-          />
-
-          <button
-            className="action-btn danger-outline"
-            onClick={handleClearAll}
-            title="Clear all images"
-          >
-            <Trash2 size={15} /> Clear All
-          </button>
         </div>
       </header>
 
-      {/* Main FlipBook Area */}
+      {/* Main FlipBook Area: 18 x 12 Landscape Spread */}
       <div className="flipbook-container">
         <HTMLFlipBook
-          key={showCover ? 'cover-on' : 'cover-off'}
           width={PAGE_WIDTH}
           height={PAGE_HEIGHT}
           size="stretch"
-          minWidth={280}
-          maxWidth={450}
-          minHeight={420}
-          maxHeight={675}
+          minWidth={360}
+          maxWidth={840}
+          minHeight={240}
+          maxHeight={560}
           maxShadowOpacity={0.5}
           drawShadow={true}
-          showCover={showCover}
+          showCover={false}
           mobileScrollSupport={true}
           onFlip={onPageChange}
           className="flipbook-canvas"
@@ -241,19 +139,15 @@ function Book() {
               <Page
                 key={pageNum}
                 pageNumber={pageNum}
-                totalPages={TOTAL_PAGES}
                 imageData={pageInfo.image}
                 fitMode={pageInfo.fitMode}
-                onImageChange={handleImageChange}
-                onImageRemove={handleImageRemove}
-                onToggleFitMode={handleToggleFitMode}
               />
             );
           })}
         </HTMLFlipBook>
       </div>
 
-      {/* Navigation & Controls Bar */}
+      {/* Bottom Navigation & Controls Bar */}
       <footer className="book-controls">
         <div className="nav-controls">
           <button
@@ -292,6 +186,14 @@ function Book() {
             title="Last Page"
           >
             <ChevronsRight size={18} />
+          </button>
+
+          <button
+            className={`nav-btn expand-btn ${isFullScreen ? 'active' : ''}`}
+            onClick={toggleFullScreen}
+            title={isFullScreen ? "Exit Fullscreen" : "Expand Fullscreen"}
+          >
+            {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
         </div>
 
