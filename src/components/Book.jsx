@@ -157,7 +157,7 @@ function Book() {
       {/* Clean Header: Icon, Title, and Size Badge Only */}
       <header className="book-header">
         <div className="header-info">
-          <BookOpen className="header-icon" size={22} />
+          <BookOpen className="header-icon" size={26} />
           <div>
             <h1 className="app-title">18 × 12 Photo Book</h1>
             <span className="badge">18×12 Ratio • 20 Pages</span>
@@ -165,7 +165,7 @@ function Book() {
         </div>
       </header>
 
-      {/* Main FlipBook Area: 18 x 12 Landscape Spread with Touch/Pointer Dragging */}
+      {/* Main FlipBook Area: 18 x 12 Landscape Spread with Continuous Touch/Pointer Dragging */}
       <div className="flipbook-container">
         <HTMLFlipBook
           key={`${showCover ? 'cover' : 'nocover'}-${isMobile ? 'portrait' : 'landscape'}`}
@@ -176,14 +176,17 @@ function Book() {
           maxWidth={840}
           minHeight={187}
           maxHeight={560}
-          maxShadowOpacity={0.5}
+          maxShadowOpacity={0.6}
           drawShadow={true}
           showCover={showCover}
           usePortrait={isMobile}
           mobileScrollSupport={true}
-          swipeDistance={30}
+          swipeDistance={15}
+          showPageCorners={true}
+          disableFlipByClick={false}
           clickEventForward={true}
           useMouseEvents={true}
+          flippingTime={700}
           onFlip={onPageChange}
           className="flipbook-canvas"
           ref={flipBookRef}
@@ -215,7 +218,7 @@ function Book() {
             onMouseDown={stopControlPropagation}
             onTouchStart={stopControlPropagation}
           >
-            <ChevronsLeft size={20} />
+            <ChevronsLeft size={24} />
           </button>
           <button
             className="nav-btn"
@@ -226,7 +229,7 @@ function Book() {
             onMouseDown={stopControlPropagation}
             onTouchStart={stopControlPropagation}
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={24} />
           </button>
 
           <div className="page-indicator" aria-live="polite">
@@ -242,7 +245,7 @@ function Book() {
             onMouseDown={stopControlPropagation}
             onTouchStart={stopControlPropagation}
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={24} />
           </button>
           <button
             className="nav-btn"
@@ -253,7 +256,7 @@ function Book() {
             onMouseDown={stopControlPropagation}
             onTouchStart={stopControlPropagation}
           >
-            <ChevronsRight size={20} />
+            <ChevronsRight size={24} />
           </button>
 
           <button
@@ -264,7 +267,7 @@ function Book() {
             onMouseDown={stopControlPropagation}
             onTouchStart={stopControlPropagation}
           >
-            <Layers size={20} />
+            <Layers size={24} />
           </button>
 
           <button
@@ -275,12 +278,12 @@ function Book() {
             onMouseDown={stopControlPropagation}
             onTouchStart={stopControlPropagation}
           >
-            {isFullScreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            {isFullScreen ? <Minimize size={24} /> : <Maximize size={24} />}
           </button>
         </div>
 
         <div className="book-status">
-          <Sparkles size={14} className="sparkle-icon" />
+          <Sparkles size={16} className="sparkle-icon" />
           <span>{filledCount} of {TOTAL_PAGES} pages populated</span>
         </div>
       </footer>
