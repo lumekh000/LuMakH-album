@@ -43,6 +43,8 @@ export const INITIAL_PAGE_IMAGES = {
   20: { image: null, fitMode: "cover" },
   21: { image: null, fitMode: "cover" },
   22: { image: null, fitMode: "cover" },
-  23: { image: null, fitMode: "cover" },
-  24: { image: "https://i.pinimg.com/1200x/d3/3d/3c/d33d3c65be2b8168be1c73a40a8303ab.jpg", fitMode: "cover" },
+  23: { image: "https://i.pinimg.com/1200x/d3/3d/3c/d33d3c65be2b8168be1c73a40a8303ab.jpg", 
+       fitMode: "cover" },
+  24: { image: "https://i.pinimg.com/1200x/d3/3d/3c/d33d3c65be2b8168be1c73a40a8303ab.jpg", 
+       fitMode: "cover" },
 };
