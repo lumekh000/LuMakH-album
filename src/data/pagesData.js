@@ -41,4 +41,6 @@ export const INITIAL_PAGE_IMAGES = {
   18: { image: null, fitMode: "cover" },
   19: { image: null, fitMode: "cover" },
   20: { image: null, fitMode: "cover" },
+  21: { image: null, fitMode: "cover" },
+  22: { image: null, fitMode: "cover" },
 };
